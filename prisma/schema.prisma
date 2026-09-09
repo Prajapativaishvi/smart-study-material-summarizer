@@ -1,0 +1,436 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id               String            @id @default(uuid())
+  name             String
+  email            String            @unique
+  password         String
+  role             Role              @default(STUDENT)
+  organizationId   String?
+  syllabusId       String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  organization     Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  syllabus         Syllabus?         @relation(fields: [syllabusId], references: [id], onDelete: SetNull)
+
+  notes            Note[]
+  examples         Example[]
+  vivaQuestions    VivaQuestion[]
+  vivaAttempts     VivaAttempt[]
+  quizzes          Quiz[]
+  quizAttempts     QuizAttempt[]
+  flashcards       Flashcard[]
+  flashcardReviews FlashcardReview[]
+  studyGroups      StudyGroup[]
+  groupMembers     GroupMember[]
+  groupMessages    GroupMessage[]
+  studentProgress  StudentProgress[]
+
+  @@map("users")
+}
+
+model Subject {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  units       Unit[]
+
+  @@map("subjects")
+}
+
+model Unit {
+  id          String   @id @default(uuid())
+  subjectId   String
+  name        String
+  unitNumber  Int
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  topics      Topic[]
+
+  @@map("units")
+}
+
+model Topic {
+  id              String            @id @default(uuid())
+  unitId          String
+  name            String
+  description     String?
+  unit            Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  notes           Note[]
+  examples        Example[]
+  vivaQuestions   VivaQuestion[]
+  vivaAttempts    VivaAttempt[]
+  quizzes         Quiz[]
+  flashcards      Flashcard[]
+  studentProgress StudentProgress[]
+
+  @@map("topics")
+}
+
+model Note {
+  id              String         @id @default(uuid())
+  topicId         String
+  organizationId  String?
+  syllabusId      String?
+  syllabusTopicId String?
+  conceptId       String?
+  title           String
+  content         String
+  createdBy       String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  topic           Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  creator         User           @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  organization    Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  syllabus        Syllabus?      @relation(fields: [syllabusId], references: [id], onDelete: SetNull)
+  syllabusTopic   SyllabusTopic? @relation(fields: [syllabusTopicId], references: [id], onDelete: SetNull)
+  concept         Concept?       @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+
+  @@map("notes")
+}
+
+model Example {
+  id              String         @id @default(uuid())
+  topicId         String
+  organizationId  String?
+  syllabusId      String?
+  syllabusTopicId String?
+  conceptId       String?
+  question        String
+  solution        String
+  difficulty      Difficulty     @default(MEDIUM)
+  createdBy       String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  topic           Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  creator         User           @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  organization    Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  syllabus        Syllabus?      @relation(fields: [syllabusId], references: [id], onDelete: SetNull)
+  syllabusTopic   SyllabusTopic? @relation(fields: [syllabusTopicId], references: [id], onDelete: SetNull)
+  concept         Concept?       @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+
+  @@map("examples")
+}
+
+model VivaQuestion {
+  id              String         @id @default(uuid())
+  topicId         String
+  organizationId  String?
+  syllabusId      String?
+  syllabusTopicId String?
+  conceptId       String?
+  question        String
+  expectedAnswer  String
+  createdBy       String
+  createdAt       DateTime       @default(now())
+
+  topic           Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  creator         User           @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  organization    Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  syllabus        Syllabus?      @relation(fields: [syllabusId], references: [id], onDelete: SetNull)
+  syllabusTopic   SyllabusTopic? @relation(fields: [syllabusTopicId], references: [id], onDelete: SetNull)
+  concept         Concept?       @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+
+  @@map("viva_questions")
+}
+
+model VivaAttempt {
+  id          String   @id @default(uuid())
+  studentId   String
+  topicId     String
+  score       Float
+  attemptedAt DateTime @default(now())
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@map("viva_attempts")
+}
+
+model Quiz {
+  id              String         @id @default(uuid())
+  topicId         String
+  organizationId  String?
+  syllabusId      String?
+  syllabusTopicId String?
+  conceptId       String?
+  title           String
+  createdBy       String
+  createdAt       DateTime       @default(now())
+
+  topic           Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  creator         User           @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  organization    Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  syllabus        Syllabus?      @relation(fields: [syllabusId], references: [id], onDelete: SetNull)
+  syllabusTopic   SyllabusTopic? @relation(fields: [syllabusTopicId], references: [id], onDelete: SetNull)
+  concept         Concept?       @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  questions       QuizQuestion[]
+  attempts        QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id            String   @id @default(uuid())
+  quizId        String
+  question      String
+  options       String   // JSON string of options array
+  correctAnswer Int      // Zero-based index of correct option
+  explanation   String?
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_questions")
+}
+
+model QuizAttempt {
+  id             String   @id @default(uuid())
+  studentId      String
+  quizId         String
+  score          Int
+  totalQuestions Int
+  attemptedAt    DateTime @default(now())
+  student        User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+model Flashcard {
+  id              String            @id @default(uuid())
+  topicId         String
+  organizationId  String?
+  syllabusId      String?
+  syllabusTopicId String?
+  conceptId       String?
+  question        String
+  answer          String
+  createdBy       String
+  createdAt       DateTime          @default(now())
+
+  topic           Topic             @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  creator         User              @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  organization    Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  syllabus        Syllabus?         @relation(fields: [syllabusId], references: [id], onDelete: SetNull)
+  syllabusTopic   SyllabusTopic?    @relation(fields: [syllabusTopicId], references: [id], onDelete: SetNull)
+  concept         Concept?          @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  reviews         FlashcardReview[]
+
+  @@map("flashcards")
+}
+
+model FlashcardReview {
+  id          String    @id @default(uuid())
+  studentId   String
+  flashcardId String
+  reviewedAt  DateTime  @default(now())
+  student     User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  flashcard   Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+
+  @@map("flashcard_reviews")
+}
+
+model StudyGroup {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  createdBy   String
+  createdAt   DateTime      @default(now())
+  creator     User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+  messages    GroupMessage[]
+
+  @@map("study_groups")
+}
+
+model GroupMember {
+  id        String     @id @default(uuid())
+  groupId   String
+  studentId String
+  joinedAt  DateTime   @default(now())
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student   User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, studentId])
+  @@map("group_members")
+}
+
+model GroupMessage {
+  id        String     @id @default(uuid())
+  groupId   String
+  senderId  String
+  message   String
+  createdAt DateTime   @default(now())
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender    User       @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("group_messages")
+}
+
+model StudentProgress {
+  id                 String   @id @default(uuid())
+  studentId          String
+  topicId            String
+  notesCompleted     Boolean  @default(false)
+  practiceCompleted  Boolean  @default(false)
+  vivaScore          Float    @default(0)
+  quizScore          Float    @default(0)
+  flashcardsReviewed Int      @default(0)
+  overallProgress    Float    @default(0)
+  updatedAt          DateTime @updatedAt
+  student            User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic              Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, topicId])
+  @@map("student_progress")
+}
+
+// ==========================================
+// MULTI-SYLLABUS & CONCEPT MAPPING MODELS
+// ==========================================
+
+model Organization {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  type      String     // e.g. "TECHNICAL_BOARD", "UNIVERSITY", "COLLEGE", "AUTONOMOUS"
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  syllabi   Syllabus[]
+  users     User[]
+  notes     Note[]
+  examples  Example[]
+  viva      VivaQuestion[]
+  quizzes   Quiz[]
+  flashcards Flashcard[]
+
+  @@map("organizations")
+}
+
+model Syllabus {
+  id             String         @id @default(uuid())
+  organizationId String
+  name           String
+  version        String
+  description    String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  units          SyllabusUnit[]
+  users          User[]
+  notes          Note[]
+  examples       Example[]
+  viva           VivaQuestion[]
+  quizzes        Quiz[]
+  flashcards     Flashcard[]
+
+  @@unique([organizationId, name, version])
+  @@map("syllabi")
+}
+
+model SyllabusUnit {
+  id          String            @id @default(uuid())
+  syllabusId  String
+  name        String
+  unitNumber  Int
+  type        String            @default("UNIT") // "UNIT" or "MODULE"
+  description String?
+  createdAt   DateTime          @default(now())
+
+  syllabus    Syllabus          @relation(fields: [syllabusId], references: [id], onDelete: Cascade)
+  sections    SyllabusSection[]
+  topics      SyllabusTopic[]
+
+  @@map("syllabus_units")
+}
+
+model SyllabusSection {
+  id          String          @id @default(uuid())
+  unitId      String
+  name        String
+  orderIndex  Int             @default(1)
+  description String?
+  createdAt   DateTime        @default(now())
+
+  unit        SyllabusUnit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  topics      SyllabusTopic[]
+
+  @@map("syllabus_sections")
+}
+
+model SyllabusTopic {
+  id          String                 @id @default(uuid())
+  unitId      String
+  sectionId   String?
+  name        String
+  orderIndex  Int                    @default(1)
+  description String?
+  createdAt   DateTime               @default(now())
+
+  unit        SyllabusUnit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  section     SyllabusSection?       @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  concepts    SyllabusTopicConcept[]
+  notes       Note[]
+  examples    Example[]
+  viva        VivaQuestion[]
+  quizzes     Quiz[]
+  flashcards  Flashcard[]
+
+  @@map("syllabus_topics")
+}
+
+model Concept {
+  id            String                 @id @default(uuid())
+  name          String                 @unique
+  code          String?
+  description   String?
+  category      String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  topicMappings SyllabusTopicConcept[]
+  notes         Note[]
+  examples      Example[]
+  viva          VivaQuestion[]
+  quizzes       Quiz[]
+  flashcards    Flashcard[]
+
+  @@map("concepts")
+}
+
+model SyllabusTopicConcept {
+  id              String        @id @default(uuid())
+  syllabusTopicId String
+  conceptId       String
+  createdAt       DateTime      @default(now())
+
+  syllabusTopic   SyllabusTopic @relation(fields: [syllabusTopicId], references: [id], onDelete: Cascade)
+  concept         Concept       @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([syllabusTopicId, conceptId])
+  @@map("syllabus_topic_concepts")
+}
+

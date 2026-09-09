@@ -1,0 +1,6 @@
+{
+  "name": "StudyLens",
+  "description": "Intelligent study platform for college students with multi-syllabus and concept mapping support. Turn study material into an interactive learning path: Understand, Practice, Revise.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
